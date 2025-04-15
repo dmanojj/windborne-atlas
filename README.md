@@ -1,7 +1,8 @@
 # Windborne  - Atlas Software Intern
 
-Shipping Delay Forecast
-Deployed via Vercel
+- Shipping Delay Forecast <br>
+- Deployed via Vercel - https://windborne-atlas.vercel.app/ 
+
 ## About Shipping Delayy Forecast
 Shipping Delays are quite common in the supply chain industry and this is when I thought that Windborne's technology and API can be used to analyze trade routes and predict whether or not a route would experience shipping delay based on the weather conditions in that particular region. I have sliced the json response so that it contains only first 10 places since it hits my openweather api call limit. Finally it predicts whether a route will experience shipping delay or not based on certain conditions. (I have hardcoded the conditions as of now for testing.)
 
