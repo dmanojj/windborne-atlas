@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather Shipping Delay</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .delayed {
+      background-color: #ffdddd;
+    }
+    .ok {
+      background-color: #ddffdd;
+    }
+    #message {
+      margin-top: 20px;
+      padding: 10px;
+      color: white;
+      background-color: #e74c3c;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Shipping Delay Forecast</h1>
+  <p> Engineering Challenge for Windborne - Atlas Software Intern</p>
+
+  <label for="hourSelect">Select Time:</label>
+  <select id="hourSelect">
+    <script>
+      for (let i = 0; i < 24; i++) {
+        const hour = i.toString().padStart(2, '0');
+        document.write(`<option value="${hour}">${hour}:00</option>`);
+      }
+    </script>
+  </select>
+
+  <button onclick="loadData()">Get Data</button>
+
+  <div id="message"></div>
+
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>Latitude</th>
+        <th>Longitude</th>
+        <th>Location</th>
+        <th>Weather</th>
+        <th>Shipping Delay</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2 id="mapTitle" style="display: none;">Map View</h2>
+  <div id="map" style="height: 500px; margin-top: 20px;"></div>
+
+  <script>
+    let map;
+    let markersLayer;
+
+    async function loadData() {
+      const hour = document.getElementById('hourSelect').value;
+      const res = await fetch(`/hour?value=${hour}`);
+      const data = await res.json();
+      mapTitle.style.display = "none";
+    
+
+      const tbody = document.querySelector("#resultTable tbody");
+      const messageDiv = document.getElementById("message");
+
+      // Reset
+      tbody.innerHTML = "";
+      messageDiv.style.display = "none";
+      messageDiv.innerText = "";
+
+      // Initialize map once
+      if (!map) {
+        map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: 'Map data © OpenStreetMap contributors'
+        }).addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+      } else {
+        markersLayer.clearLayers();
+      }
+
+      // Handle unavailable data
+      if (!data.available) {
+        messageDiv.innerText = data.message || "Data unavailable.";
+        messageDiv.style.display = "block";
+        return;
+      }
+      mapTitle.style.display = "block";
+      
+
+      // Populate table and map
+      data.points.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = p.shipping_delay ? "delayed" : "ok";
+        tr.innerHTML = `
+          <td>${p.latitude.toFixed(5)}</td>
+          <td>${p.longitude.toFixed(5)}</td>
+          <td>${p.location || "Unknown"}</td>
+          <td>${p.weather?.weather?.[0]?.main || "Unknown"}</td>
+          <td>${p.shipping_delay ? "Yes 🚨" : "No ✅"}</td>
+        `;
+        tbody.appendChild(tr);
+
+        // Add marker to the map
+        const marker = L.marker([p.latitude, p.longitude]).bindPopup(`
+          <b>${p.location || 'Unknown Location'}</b><br/>
+          Weather: ${p.weather?.weather?.[0]?.main || "Unknown"}<br/>
+          Delay: ${p.shipping_delay ? "🚨 Yes" : "✅ No"}
+        `);
+        markersLayer.addLayer(marker);
+      });
+    }
+  </script>
+
+</body>
+</html>
